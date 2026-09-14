@@ -10,7 +10,7 @@ binding = "ASSETS"
 [[d1_databases]]
 binding = "DB"
 database_name = "competitor-post-radar"
-database_id = "REPLACE_WITH_YOUR_D1_DATABASE_ID" # set after `npm run db:create`
+database_id = "23a7ee5e-0c6b-4375-9a8d-a8da2d6b6910"
 
 # Monday 09:00 UTC — adjust to when the growth team should get the digest.
 [triggers]
