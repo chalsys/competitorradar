@@ -1,4 +1,4 @@
-import type { CapturePayload, Competitor, DigestConfig, Env, Post } from "./types";
+import type { CapturePayload, Competitor, DigestConfig, Env, Post, ResearchNote } from "./types";
 
 function newId(): string {
   return crypto.randomUUID();
@@ -18,23 +18,37 @@ export async function listCompetitors(env: Env, status?: string): Promise<Compet
 
 export async function createCompetitor(
   env: Env,
-  input: { name: string; linkedin_url: string; list_name?: string }
+  input: { name: string; linkedin_url: string; list_name?: string; website_url?: string }
 ): Promise<Competitor> {
   const id = newId();
   const linkedin_url = normalizeUrl(input.linkedin_url);
+  const website_url = input.website_url?.trim() || null;
   await env.DB.prepare(
-    `INSERT INTO competitors (id, name, linkedin_url, list_name, status)
-     VALUES (?, ?, ?, ?, 'active')`
+    `INSERT INTO competitors (id, name, linkedin_url, list_name, status, website_url)
+     VALUES (?, ?, ?, ?, 'active', ?)`
   )
-    .bind(id, input.name.trim(), linkedin_url, input.list_name?.trim() || "Default")
+    .bind(id, input.name.trim(), linkedin_url, input.list_name?.trim() || "Default", website_url)
     .run();
-  return { id, name: input.name.trim(), linkedin_url, list_name: input.list_name?.trim() || "Default", status: "active", created_at: new Date().toISOString() };
+  return {
+    id,
+    name: input.name.trim(),
+    linkedin_url,
+    list_name: input.list_name?.trim() || "Default",
+    status: "active",
+    website_url,
+    created_at: new Date().toISOString(),
+  };
+}
+
+export async function getCompetitor(env: Env, id: string): Promise<Competitor | null> {
+  const row = await env.DB.prepare("SELECT * FROM competitors WHERE id = ?").bind(id).first<Competitor>();
+  return row ?? null;
 }
 
 export async function updateCompetitor(
   env: Env,
   id: string,
-  patch: { name?: string; list_name?: string; status?: string }
+  patch: { name?: string; list_name?: string; status?: string; website_url?: string }
 ): Promise<void> {
   const fields: string[] = [];
   const values: unknown[] = [];
@@ -49,6 +63,10 @@ export async function updateCompetitor(
   if (patch.status !== undefined) {
     fields.push("status = ?");
     values.push(patch.status);
+  }
+  if (patch.website_url !== undefined) {
+    fields.push("website_url = ?");
+    values.push(patch.website_url.trim() || null);
   }
   if (fields.length === 0) return;
   values.push(id);
@@ -319,4 +337,31 @@ export async function upsertDigestConfig(
     )
     .run();
   return { id, ...input };
+}
+
+export async function insertResearchNote(
+  env: Env,
+  input: { competitor_id: string; summary: string; source_url: string }
+): Promise<void> {
+  await env.DB.prepare(
+    `INSERT INTO research_notes (id, competitor_id, summary, source_url, created_at)
+     VALUES (?, ?, ?, ?, ?)`
+  )
+    .bind(newId(), input.competitor_id, input.summary, input.source_url, new Date().toISOString())
+    .run();
+}
+
+// Most recent research note per competitor (research_notes accumulates a full history;
+// the dashboard only ever needs the latest one per competitor).
+export async function listLatestResearch(env: Env): Promise<ResearchNote[]> {
+  const { results } = await env.DB.prepare(
+    `SELECT r.*, c.name AS competitor_name
+     FROM research_notes r
+     JOIN competitors c ON c.id = r.competitor_id
+     WHERE r.created_at = (
+       SELECT MAX(r2.created_at) FROM research_notes r2 WHERE r2.competitor_id = r.competitor_id
+     )
+     ORDER BY c.name`
+  ).all<ResearchNote>();
+  return results;
 }

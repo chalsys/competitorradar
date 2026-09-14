@@ -6,6 +6,7 @@ CREATE TABLE IF NOT EXISTS competitors (
   linkedin_url TEXT NOT NULL UNIQUE,
   list_name TEXT NOT NULL DEFAULT 'Default',
   status TEXT NOT NULL DEFAULT 'active', -- 'active' | 'archived'
+  website_url TEXT, -- public site researched weekly by the OpenRouter-backed research job; NULL skips research
   created_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
@@ -55,3 +56,15 @@ CREATE TABLE IF NOT EXISTS digest_configs (
   top_n INTEGER NOT NULL DEFAULT 10,
   enabled INTEGER NOT NULL DEFAULT 1
 );
+
+-- One row per weekly research run per competitor (not overwritten, so a history accumulates).
+CREATE TABLE IF NOT EXISTS research_notes (
+  id TEXT PRIMARY KEY,
+  competitor_id TEXT NOT NULL REFERENCES competitors(id),
+  summary TEXT NOT NULL,
+  source_url TEXT NOT NULL,
+  created_at TEXT NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_research_competitor ON research_notes(competitor_id);
+CREATE INDEX IF NOT EXISTS idx_research_created ON research_notes(created_at);

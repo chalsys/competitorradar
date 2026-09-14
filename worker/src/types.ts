@@ -4,6 +4,8 @@ export interface Env {
   CAPTURE_API_TOKEN: string;
   RESEND_API_KEY: string;
   FROM_EMAIL: string;
+  OPENROUTER_API_KEY: string;
+  OPENROUTER_MODEL: string;
 }
 
 export type MediaType = "text" | "image" | "video" | "document" | "poll";
@@ -14,6 +16,7 @@ export interface Competitor {
   linkedin_url: string;
   list_name: string;
   status: "active" | "archived";
+  website_url: string | null;
   created_at: string;
 }
 
@@ -61,4 +64,13 @@ export interface DigestConfig {
   min_likes: number;
   top_n: number;
   enabled: boolean;
+}
+
+export interface ResearchNote {
+  id: string;
+  competitor_id: string;
+  competitor_name: string;
+  summary: string;
+  source_url: string;
+  created_at: string;
 }

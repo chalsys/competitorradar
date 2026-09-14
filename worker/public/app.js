@@ -145,7 +145,11 @@ document.getElementById("f-export").addEventListener("click", async (e) => {
 
 // --- Competitors ---
 async function loadCompetitors() {
-  const competitors = await api("/api/competitors");
+  const [competitors, researchNotes] = await Promise.all([
+    api("/api/competitors"),
+    api("/api/research-notes"),
+  ]);
+  const latestResearchByCompetitor = Object.fromEntries(researchNotes.map((r) => [r.competitor_id, r]));
 
   const competitorSelect = document.getElementById("f-competitor");
   const listSelect = document.getElementById("f-list");
@@ -159,16 +163,24 @@ async function loadCompetitors() {
 
   const tbody = document.querySelector("#competitor-table tbody");
   tbody.innerHTML = competitors
-    .map(
-      (c) => `
+    .map((c) => {
+      const research = latestResearchByCompetitor[c.id];
+      return `
     <tr data-id="${c.id}">
       <td>${escapeHtml(c.name)}</td>
       <td>${escapeHtml(c.list_name)}</td>
       <td class="status-${c.status}">${c.status}</td>
       <td><a class="post-link" href="${escapeHtml(c.linkedin_url)}" target="_blank" rel="noopener">Profile ↗</a></td>
-      <td><button class="link toggle-status">${c.status === "active" ? "Archive" : "Reactivate"}</button></td>
-    </tr>`
-    )
+      <td>${c.website_url ? `<a class="post-link" href="${escapeHtml(c.website_url)}" target="_blank" rel="noopener">Site ↗</a>` : "—"}</td>
+      <td style="max-width:260px;font-size:12.5px;color:var(--ink-muted);" title="${escapeHtml(research?.summary || "")}">
+        ${research ? `${escapeHtml(research.summary).slice(0, 140)}${research.summary.length > 140 ? "…" : ""}` : "No research yet"}
+      </td>
+      <td>
+        <button class="link toggle-status">${c.status === "active" ? "Archive" : "Reactivate"}</button>
+        ${c.website_url ? `<button class="link research-now">Research now</button>` : ""}
+      </td>
+    </tr>`;
+    })
     .join("");
 
   tbody.querySelectorAll(".toggle-status").forEach((btn) => {
@@ -185,17 +197,38 @@ async function loadCompetitors() {
       loadCompetitors();
     });
   });
+
+  tbody.querySelectorAll(".research-now").forEach((btn) => {
+    btn.addEventListener("click", async () => {
+      const row = btn.closest("tr");
+      btn.textContent = "Researching…";
+      btn.disabled = true;
+      try {
+        await api(`/api/competitors/${row.dataset.id}/research`, { method: "POST" });
+      } finally {
+        loadCompetitors();
+      }
+    });
+  });
 }
 
 document.getElementById("c-add").addEventListener("click", async () => {
   const name = document.getElementById("c-name").value.trim();
   const linkedin_url = document.getElementById("c-url").value.trim();
   const list_name = document.getElementById("c-list").value.trim() || "Default";
+  const website_url = document.getElementById("c-website").value.trim();
   if (!name || !linkedin_url) return;
-  await api("/api/competitors", { method: "POST", body: JSON.stringify({ name, linkedin_url, list_name }) });
+  await api("/api/competitors", { method: "POST", body: JSON.stringify({ name, linkedin_url, list_name, website_url }) });
   document.getElementById("c-name").value = "";
   document.getElementById("c-url").value = "";
   document.getElementById("c-list").value = "";
+  document.getElementById("c-website").value = "";
+  loadCompetitors();
+});
+
+document.getElementById("r-send-now").addEventListener("click", async () => {
+  await api("/api/research/send-now", { method: "POST" });
+  alert("Research run triggered for every competitor with a website URL set.");
   loadCompetitors();
 });
 

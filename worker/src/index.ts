@@ -1,7 +1,9 @@
 import {
   createCompetitor,
+  getCompetitor,
   listCompetitors,
   listDigestConfigs,
+  listLatestResearch,
   listPosts,
   updateCompetitor,
   updatePost,
@@ -10,6 +12,7 @@ import {
 } from "./db";
 import type { PostFilters } from "./db";
 import { runWeeklyDigests } from "./digest";
+import { researchCompetitor, runWeeklyResearch } from "./research";
 import type { CapturePayload, Env, Post } from "./types";
 
 const CORS_HEADERS = {
@@ -109,14 +112,24 @@ export default {
         return json(await listCompetitors(env, status));
       }
       if (url.pathname === "/api/competitors" && request.method === "POST") {
-        const body = await request.json<{ name: string; linkedin_url: string; list_name?: string }>();
+        const body = await request.json<{ name: string; linkedin_url: string; list_name?: string; website_url?: string }>();
         if (!body.name || !body.linkedin_url) return json({ error: "name and linkedin_url are required" }, 400);
         return json(await createCompetitor(env, body), 201);
       }
       const competitorMatch = url.pathname.match(/^\/api\/competitors\/([^/]+)$/);
       if (competitorMatch && request.method === "PATCH") {
-        const body = await request.json<{ name?: string; list_name?: string; status?: string }>();
+        const body = await request.json<{ name?: string; list_name?: string; status?: string; website_url?: string }>();
         await updateCompetitor(env, competitorMatch[1], body);
+        return json({ ok: true });
+      }
+
+      // Trigger a one-off research run for a single competitor (dashboard "Research now" button)
+      const researchMatch = url.pathname.match(/^\/api\/competitors\/([^/]+)\/research$/);
+      if (researchMatch && request.method === "POST") {
+        const competitor = await getCompetitor(env, researchMatch[1]);
+        if (!competitor) return json({ error: "competitor not found" }, 404);
+        if (!competitor.website_url) return json({ error: "competitor has no website_url set" }, 400);
+        await researchCompetitor(env, competitor);
         return json({ ok: true });
       }
 
@@ -176,6 +189,17 @@ export default {
         return json({ ok: true });
       }
 
+      // Research notes (latest one per competitor)
+      if (url.pathname === "/api/research-notes" && request.method === "GET") {
+        return json(await listLatestResearch(env));
+      }
+
+      // Manual trigger, useful for testing research across all competitors without waiting for Monday.
+      if (url.pathname === "/api/research/send-now" && request.method === "POST") {
+        await runWeeklyResearch(env);
+        return json({ ok: true });
+      }
+
       return json({ error: "not found" }, 404);
     } catch (err) {
       console.error(err);
@@ -185,5 +209,6 @@ export default {
 
   async scheduled(_event: ScheduledEvent, env: Env, ctx: ExecutionContext): Promise<void> {
     ctx.waitUntil(runWeeklyDigests(env));
+    ctx.waitUntil(runWeeklyResearch(env));
   },
 };

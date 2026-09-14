@@ -67,14 +67,19 @@
           <div class="field"><label>Name</label><input id="c-name" type="text" placeholder="Acme Robotics" /></div>
           <div class="field"><label>LinkedIn URL</label><input id="c-url" type="text" placeholder="https://www.linkedin.com/company/acme" style="min-width:260px;" /></div>
           <div class="field"><label>List</label><input id="c-list" type="text" placeholder="Direct competitors" /></div>
+          <div class="field"><label>Website URL</label><input id="c-website" type="text" placeholder="https://acme.com" style="min-width:200px;" /></div>
           <button class="primary" id="c-add">Add</button>
         </div>
       </div>
       <div class="panel" style="padding:0; overflow-x:auto;">
         <table id="competitor-table">
-          <thead><tr><th>Name</th><th>List</th><th>Status</th><th>LinkedIn</th><th></th></tr></thead>
+          <thead><tr><th>Name</th><th>List</th><th>Status</th><th>LinkedIn</th><th>Website</th><th>Latest research</th><th></th></tr></thead>
           <tbody></tbody>
         </table>
+      </div>
+      <div class="panel">
+        <p class="settings-note">Competitors with a Website URL are researched automatically every Monday alongside the digest (using OpenRouter to summarize what's on their site). Use "Research now" on a row to refresh one competitor immediately, or run all of them below for testing.</p>
+        <button class="btn" id="r-send-now">Research all now (test)</button>
       </div>
     </section>
 

@@ -18,7 +18,9 @@ crons = ["0 9 * * 1"]
 
 [vars]
 FROM_EMAIL = "radar@your-domain.com"
+OPENROUTER_MODEL = "openai/gpt-4o-mini"
 
 # Secrets (do not put these here — set with `wrangler secret put <NAME>`):
 #   CAPTURE_API_TOKEN   shared token the extension and dashboard send as `Authorization: Bearer <token>`
 #   RESEND_API_KEY      api key from resend.com, used to send the weekly digest email
+#   OPENROUTER_API_KEY  api key from openrouter.ai, used to summarize each competitor's website weekly
