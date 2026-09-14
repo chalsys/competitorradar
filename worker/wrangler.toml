@@ -23,4 +23,8 @@ OPENROUTER_MODEL = "openai/gpt-4o-mini"
 # Secrets (do not put these here — set with `wrangler secret put <NAME>`):
 #   CAPTURE_API_TOKEN   shared token the extension and dashboard send as `Authorization: Bearer <token>`
 #   RESEND_API_KEY      api key from resend.com, used to send the weekly digest email
-#   OPENROUTER_API_KEY  api key from openrouter.ai, used to summarize each competitor's website weekly
+#
+# OPENROUTER_API_KEY is bound as a Secrets Store binding instead (dashboard: Bindings
+# tab → Add binding → Secrets Store), not a wrangler.toml-declared var/secret — this
+# pinned Wrangler version (3.x) predates `secrets_store_secrets` config support. The
+# binding surfaces as an object in code: await env.OPENROUTER_API_KEY.get().

@@ -4,7 +4,7 @@ export interface Env {
   CAPTURE_API_TOKEN: string;
   RESEND_API_KEY: string;
   FROM_EMAIL: string;
-  OPENROUTER_API_KEY: string;
+  OPENROUTER_API_KEY: SecretsStoreSecret;
   OPENROUTER_MODEL: string;
 }
 
