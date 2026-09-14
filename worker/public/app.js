@@ -247,8 +247,11 @@ document.getElementById("c-add").addEventListener("click", async () => {
 
 document.getElementById("r-send-now").addEventListener("click", async () => {
   try {
-    await api("/api/research/send-now", { method: "POST" });
-    setCompetitorStatus("Research run triggered for every competitor with a website URL set.");
+    const result = await api("/api/research/send-now", { method: "POST" });
+    const parts = [];
+    if (result.researched.length) parts.push(`Researched: ${result.researched.join(", ")}`);
+    if (result.failed.length) parts.push(`Failed: ${result.failed.map((f) => `${f.name} — ${f.error}`).join("; ")}`);
+    setCompetitorStatus(parts.join(" · ") || "No competitors have a website URL set.");
     loadCompetitors();
   } catch (err) {
     setCompetitorStatus(`Failed to trigger research: ${err.message}`);

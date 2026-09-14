@@ -196,8 +196,7 @@ export default {
 
       // Manual trigger, useful for testing research across all competitors without waiting for Monday.
       if (url.pathname === "/api/research/send-now" && request.method === "POST") {
-        await runWeeklyResearch(env);
-        return json({ ok: true });
+        return json(await runWeeklyResearch(env));
       }
 
       return json({ error: "not found" }, 404);

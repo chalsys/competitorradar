@@ -17,7 +17,7 @@ function stripHtml(html: string): string {
     .trim();
 }
 
-async function fetchPageText(url: string): Promise<string | null> {
+async function fetchPageText(url: string): Promise<string> {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
   try {
@@ -25,17 +25,22 @@ async function fetchPageText(url: string): Promise<string | null> {
       signal: controller.signal,
       headers: { "User-Agent": "Mozilla/5.0 (compatible; CompetitorPostRadar/0.1)" },
     });
-    if (!res.ok) return null;
+    if (!res.ok) throw new Error(`fetching ${url} returned ${res.status}`);
     const html = await res.text();
     return stripHtml(html).slice(0, MAX_SOURCE_CHARS);
-  } catch {
-    return null;
+  } catch (err) {
+    if (err instanceof Error && err.name === "AbortError") {
+      throw new Error(`fetching ${url} timed out after ${FETCH_TIMEOUT_MS}ms`);
+    }
+    throw err instanceof Error ? new Error(`fetching ${url} failed: ${err.message}`) : err;
   } finally {
     clearTimeout(timeout);
   }
 }
 
-async function summarizeWithOpenRouter(env: Env, competitorName: string, pageText: string): Promise<string | null> {
+async function summarizeWithOpenRouter(env: Env, competitorName: string, pageText: string): Promise<string> {
+  if (!env.OPENROUTER_API_KEY) throw new Error("OPENROUTER_API_KEY secret is not set");
+
   const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
     method: "POST",
     headers: {
@@ -56,19 +61,18 @@ async function summarizeWithOpenRouter(env: Env, competitorName: string, pageTex
   });
 
   if (!res.ok) {
-    console.error(`OpenRouter request failed (${res.status}): ${await res.text()}`);
-    return null;
+    throw new Error(`OpenRouter request failed (${res.status}): ${await res.text()}`);
   }
   const data = await res.json<{ choices?: { message?: { content?: string } }[] }>();
-  return data.choices?.[0]?.message?.content?.trim() || null;
+  const content = data.choices?.[0]?.message?.content?.trim();
+  if (!content) throw new Error("OpenRouter returned an empty response");
+  return content;
 }
 
 export async function researchCompetitor(env: Env, competitor: Competitor): Promise<void> {
-  if (!competitor.website_url) return;
+  if (!competitor.website_url) throw new Error("no website_url set");
   const pageText = await fetchPageText(competitor.website_url);
-  if (!pageText) return;
   const summary = await summarizeWithOpenRouter(env, competitor.name, pageText);
-  if (!summary) return;
   await insertResearchNote(env, {
     competitor_id: competitor.id,
     summary,
@@ -76,13 +80,30 @@ export async function researchCompetitor(env: Env, competitor: Competitor): Prom
   });
 }
 
-export async function runWeeklyResearch(env: Env): Promise<void> {
+export interface ResearchRunResult {
+  researched: string[];
+  failed: { competitor_id: string; name: string; error: string }[];
+}
+
+export async function runWeeklyResearch(env: Env): Promise<ResearchRunResult> {
   const competitors = await listCompetitors(env, "active");
+  const researched: string[] = [];
+  const failed: { competitor_id: string; name: string; error: string }[] = [];
+
   for (const competitor of competitors) {
+    if (!competitor.website_url) continue;
     try {
       await researchCompetitor(env, competitor);
+      researched.push(competitor.name);
     } catch (err) {
       console.error(`Research failed for competitor ${competitor.id}`, err);
+      failed.push({
+        competitor_id: competitor.id,
+        name: competitor.name,
+        error: err instanceof Error ? err.message : String(err),
+      });
     }
   }
+
+  return { researched, failed };
 }
