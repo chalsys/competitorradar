@@ -190,11 +190,15 @@ async function loadCompetitors() {
       const current = row.querySelector("td.status-active, td.status-archived").classList.contains("status-active")
         ? "active"
         : "archived";
-      await api(`/api/competitors/${id}`, {
-        method: "PATCH",
-        body: JSON.stringify({ status: current === "active" ? "archived" : "active" }),
-      });
-      loadCompetitors();
+      try {
+        await api(`/api/competitors/${id}`, {
+          method: "PATCH",
+          body: JSON.stringify({ status: current === "active" ? "archived" : "active" }),
+        });
+        loadCompetitors();
+      } catch (err) {
+        setCompetitorStatus(`Failed to update status: ${err.message}`);
+      }
     });
   });
 
@@ -205,6 +209,8 @@ async function loadCompetitors() {
       btn.disabled = true;
       try {
         await api(`/api/competitors/${row.dataset.id}/research`, { method: "POST" });
+      } catch (err) {
+        setCompetitorStatus(`Research failed: ${err.message}`);
       } finally {
         loadCompetitors();
       }
@@ -212,24 +218,41 @@ async function loadCompetitors() {
   });
 }
 
+function setCompetitorStatus(msg) {
+  document.getElementById("c-status").textContent = msg;
+}
+
 document.getElementById("c-add").addEventListener("click", async () => {
   const name = document.getElementById("c-name").value.trim();
   const linkedin_url = document.getElementById("c-url").value.trim();
   const list_name = document.getElementById("c-list").value.trim() || "Default";
   const website_url = document.getElementById("c-website").value.trim();
-  if (!name || !linkedin_url) return;
-  await api("/api/competitors", { method: "POST", body: JSON.stringify({ name, linkedin_url, list_name, website_url }) });
-  document.getElementById("c-name").value = "";
-  document.getElementById("c-url").value = "";
-  document.getElementById("c-list").value = "";
-  document.getElementById("c-website").value = "";
-  loadCompetitors();
+  if (!name || !linkedin_url) {
+    setCompetitorStatus("Name and LinkedIn URL are required.");
+    return;
+  }
+  setCompetitorStatus("Adding…");
+  try {
+    await api("/api/competitors", { method: "POST", body: JSON.stringify({ name, linkedin_url, list_name, website_url }) });
+    document.getElementById("c-name").value = "";
+    document.getElementById("c-url").value = "";
+    document.getElementById("c-list").value = "";
+    document.getElementById("c-website").value = "";
+    setCompetitorStatus("Added ✓");
+    loadCompetitors();
+  } catch (err) {
+    setCompetitorStatus(`Failed to add: ${err.message}`);
+  }
 });
 
 document.getElementById("r-send-now").addEventListener("click", async () => {
-  await api("/api/research/send-now", { method: "POST" });
-  alert("Research run triggered for every competitor with a website URL set.");
-  loadCompetitors();
+  try {
+    await api("/api/research/send-now", { method: "POST" });
+    setCompetitorStatus("Research run triggered for every competitor with a website URL set.");
+    loadCompetitors();
+  } catch (err) {
+    setCompetitorStatus(`Failed to trigger research: ${err.message}`);
+  }
 });
 
 // --- Digest ---
