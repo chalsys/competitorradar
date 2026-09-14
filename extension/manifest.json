@@ -1,0 +1,13 @@
+{
+  "manifest_version": 3,
+  "name": "Competitor Post Radar — Capture Assistant",
+  "version": "0.1.0",
+  "description": "Log a competitor's LinkedIn posts (text, counts, link) into Competitor Post Radar with one click, instead of screenshotting and retyping them.",
+  "permissions": ["activeTab", "scripting", "storage"],
+  "host_permissions": ["https://www.linkedin.com/*"],
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "Log this week's posts"
+  },
+  "options_page": "options.html"
+}

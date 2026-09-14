@@ -1,0 +1,34 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Competitor Post Radar — Settings</title>
+  <style>
+    body { font-family: -apple-system, "Segoe UI", Roboto, Arial, sans-serif; max-width: 440px; margin: 40px auto; color: #151b1f; }
+    h1 { font-size: 18px; }
+    label { display: block; font-size: 12px; text-transform: uppercase; color: #6b7570; margin: 14px 0 4px; }
+    input { width: 100%; padding: 8px 10px; border: 1px solid #d8ded9; border-radius: 6px; font-size: 14px; box-sizing: border-box; }
+    button { margin-top: 18px; padding: 9px 18px; border-radius: 6px; border: 1px solid #b8790e; background: #b8790e; color: #2a1b00; font-weight: 600; cursor: pointer; }
+    p.hint { color: #6b7570; font-size: 12.5px; }
+    #saved { color: #2e7d52; font-size: 13px; margin-left: 10px; }
+  </style>
+</head>
+<body>
+  <h1>Competitor Post Radar — Settings</h1>
+  <p class="hint">These match the worker you deployed and the shared token you set with <code>wrangler secret put CAPTURE_API_TOKEN</code>.</p>
+
+  <label for="api-base">API base URL</label>
+  <input id="api-base" type="text" placeholder="https://competitor-post-radar.your-subdomain.workers.dev" />
+
+  <label for="api-token">API token</label>
+  <input id="api-token" type="password" placeholder="Shared token" />
+
+  <label for="captured-by">Your name (shown on each capture)</label>
+  <input id="captured-by" type="text" placeholder="e.g. Chalsy Singh" />
+
+  <button id="save-btn">Save</button>
+  <span id="saved"></span>
+
+  <script src="options.js"></script>
+</body>
+</html>

@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Competitor Post Radar</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header class="app-header">
+    <h1>Competitor Post Radar</h1>
+    <nav class="tabs">
+      <button class="tab-btn active" data-tab="feed">Feed</button>
+      <button class="tab-btn" data-tab="competitors">Competitors</button>
+      <button class="tab-btn" data-tab="digest">Digest</button>
+    </nav>
+  </header>
+
+  <main>
+
+    <div id="token-gate" class="panel hidden">
+      <h3 style="margin-top:0;">Enter access token</h3>
+      <p class="settings-note">Ask whoever deployed this tool for the shared token (the same one used in the Capture Assistant extension), or find it with <code>wrangler secret list</code>.</p>
+      <div style="display:flex; gap:8px;">
+        <input id="token-input" type="password" placeholder="Shared token" style="flex:1;" />
+        <button class="primary" id="token-save">Save</button>
+      </div>
+    </div>
+
+    <section id="tab-feed" class="tab-panel">
+      <div class="panel">
+        <div class="filter-bar">
+          <div class="field"><label>Min likes</label><input type="number" id="f-min-likes" min="0" value="0" /></div>
+          <div class="field"><label>Min comments</label><input type="number" id="f-min-comments" min="0" value="0" /></div>
+          <div class="field"><label>Min reposts</label><input type="number" id="f-min-reposts" min="0" value="0" /></div>
+          <div class="field"><label>Since</label><input type="date" id="f-since" /></div>
+          <div class="field"><label>Competitor</label><select id="f-competitor"><option value="">All</option></select></div>
+          <div class="field"><label>List</label><select id="f-list"><option value="">All</option></select></div>
+          <div class="field"><label>Media</label>
+            <select id="f-media">
+              <option value="">Any</option>
+              <option value="text">Text</option>
+              <option value="image">Image</option>
+              <option value="video">Video</option>
+              <option value="document">Document</option>
+              <option value="poll">Poll</option>
+            </select>
+          </div>
+          <div class="field"><label>Sort</label>
+            <select id="f-sort">
+              <option value="engagement">Engagement</option>
+              <option value="recent">Most recent</option>
+              <option value="velocity">Velocity (engagement / day)</option>
+            </select>
+          </div>
+          <button class="primary" id="f-apply">Apply</button>
+          <a class="export-link" id="f-export" href="#">Export CSV ↓</a>
+        </div>
+      </div>
+      <div id="post-list" class="post-list"></div>
+    </section>
+
+    <section id="tab-competitors" class="tab-panel hidden">
+      <div class="panel">
+        <h3 style="margin-top:0;">Add a competitor</h3>
+        <div class="filter-bar">
+          <div class="field"><label>Name</label><input id="c-name" type="text" placeholder="Acme Robotics" /></div>
+          <div class="field"><label>LinkedIn URL</label><input id="c-url" type="text" placeholder="https://www.linkedin.com/company/acme" style="min-width:260px;" /></div>
+          <div class="field"><label>List</label><input id="c-list" type="text" placeholder="Direct competitors" /></div>
+          <button class="primary" id="c-add">Add</button>
+        </div>
+      </div>
+      <div class="panel" style="padding:0; overflow-x:auto;">
+        <table id="competitor-table">
+          <thead><tr><th>Name</th><th>List</th><th>Status</th><th>LinkedIn</th><th></th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="tab-digest" class="tab-panel hidden">
+      <div class="panel">
+        <h3 style="margin-top:0;">Weekly digest</h3>
+        <p class="settings-note">One email per week, per audience below, listing the top posts across the chosen competitor list that clear the like threshold.</p>
+        <div class="filter-bar">
+          <div class="field"><label>Name</label><input id="d-name" type="text" placeholder="Weekly digest" /></div>
+          <div class="field"><label>List</label><input id="d-list" type="text" placeholder="all" /></div>
+          <div class="field"><label>Min likes</label><input id="d-min-likes" type="number" value="25" /></div>
+          <div class="field"><label>Top N</label><input id="d-top-n" type="number" value="10" /></div>
+          <div class="field"><label>Enabled</label><input id="d-enabled" type="checkbox" checked style="width:20px;height:20px;" /></div>
+        </div>
+        <div class="field" style="margin-top:12px; max-width:480px;">
+          <label>Recipients (comma-separated)</label>
+          <input id="d-recipients" type="text" placeholder="growth@wiasystems.com, cmo@wiasystems.com" />
+        </div>
+        <div style="margin-top:14px; display:flex; gap:10px;">
+          <button class="primary" id="d-save">Save</button>
+          <button class="btn" id="d-send-now">Send now (test)</button>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>

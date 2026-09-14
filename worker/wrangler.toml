@@ -1,0 +1,24 @@
+name = "competitor-post-radar"
+main = "src/index.ts"
+compatibility_date = "2024-09-23"
+
+# Serves the dashboard (public/) for any request that isn't /api/*.
+[assets]
+directory = "./public"
+binding = "ASSETS"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "competitor-post-radar"
+database_id = "REPLACE_WITH_YOUR_D1_DATABASE_ID" # set after `npm run db:create`
+
+# Monday 09:00 UTC — adjust to when the growth team should get the digest.
+[triggers]
+crons = ["0 9 * * 1"]
+
+[vars]
+FROM_EMAIL = "radar@your-domain.com"
+
+# Secrets (do not put these here — set with `wrangler secret put <NAME>`):
+#   CAPTURE_API_TOKEN   shared token the extension and dashboard send as `Authorization: Bearer <token>`
+#   RESEND_API_KEY      api key from resend.com, used to send the weekly digest email
