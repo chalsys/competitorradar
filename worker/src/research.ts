@@ -40,7 +40,10 @@ async function fetchPageText(url: string): Promise<string> {
 
 async function summarizeWithOpenRouter(env: Env, competitorName: string, pageText: string): Promise<string> {
   if (!env.OPENROUTER_API_KEY) throw new Error("OPENROUTER_API_KEY binding is not configured");
-  const apiKey = await env.OPENROUTER_API_KEY.get();
+  // Trim defensively — a stray trailing newline/whitespace from copy-pasting the key
+  // into the Secrets Store silently corrupts the Authorization header.
+  const apiKey = (await env.OPENROUTER_API_KEY.get()).trim();
+  if (!apiKey) throw new Error("OPENROUTER_API_KEY secret value is empty");
 
   const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
     method: "POST",
