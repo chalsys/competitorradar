@@ -39,7 +39,7 @@ document.getElementById("token-save").addEventListener("click", () => {
   document.getElementById("token-gate").classList.add("hidden");
   init();
 });
-if (!getToken()) document.getElementById("token-gate").classList.remove("hidden");
+// Token gate temporarily disabled — see isAuthorized() in worker/src/index.ts.
 
 // --- Feed ---
 const mediaEmoji = { text: "📝", image: "🖼️", video: "🎥", document: "📄", poll: "📊" };
@@ -237,7 +237,6 @@ document.getElementById("d-send-now").addEventListener("click", async () => {
 });
 
 async function init() {
-  if (!getToken()) return;
   try {
     await loadCompetitors();
     await loadFeed();

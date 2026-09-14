@@ -25,10 +25,10 @@ function json(data: unknown, status = 200): Response {
   });
 }
 
-function isAuthorized(request: Request, env: Env): boolean {
-  const header = request.headers.get("Authorization") || "";
-  const token = header.replace(/^Bearer\s+/i, "");
-  return Boolean(env.CAPTURE_API_TOKEN) && token === env.CAPTURE_API_TOKEN;
+function isAuthorized(_request: Request, _env: Env): boolean {
+  // Temporarily disabled — no CAPTURE_API_TOKEN check for now. Re-enable by
+  // restoring the Bearer-token comparison against env.CAPTURE_API_TOKEN.
+  return true;
 }
 
 function parsePostFilters(url: URL): PostFilters {
